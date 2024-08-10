@@ -1,5 +1,0 @@
-[submodule "database"]
-	path = database
-	url = https://github.com/manami-project/anime-offline-database
-	branch = master
-	shallow = true
