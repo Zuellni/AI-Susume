@@ -1,2 +1,2 @@
 # AI-Susume
-An anime recommendation system for [AniList](https://anilist.co/) using [tensorflow.js](https://github.com/tensorflow/tfjs) and an [offline database](https://github.com/manami-project/anime-offline-database).
+An experimental anime recommendation system for [AniList](https://anilist.co) using a simple neural network trained in the browser with [TensorFlow.js](https://github.com/tensorflow/tfjs) and an [offline database](https://github.com/manami-project). Probably very buggy.

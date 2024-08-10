@@ -137,3 +137,10 @@ main output {
 	height: 3rem;
 	padding: 1rem;
 }
+
+@media (max-width: 1080px) {
+	body {
+		display: flex;
+		flex-direction: column;
+	}
+}
