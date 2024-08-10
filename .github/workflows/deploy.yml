@@ -1,4 +1,4 @@
-name: Deploy Page
+name: Deploy
 
 on:
   push:

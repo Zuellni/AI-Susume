@@ -272,15 +272,17 @@ predict.addEventListener("click", async () => {
 		for (let i = 0; i < preds.length; i++) {
 			const row = document.createElement("output")
 			const link = document.createElement("a")
-			const span = document.createElement("span")
+			const linkSpan = document.createElement("span")
+			const textSpan = document.createElement("span")
 
 			link.href = preds[i].siteUrl
 			link.target = "_blank"
 			link.innerText = preds[i].title
-			span.innerText = Math.round(scoresNorm[i])
+			textSpan.innerText = Math.round(scoresNorm[i])
 
-			row.appendChild(link)
-			row.appendChild(span)
+			linkSpan.appendChild(link)
+			row.appendChild(linkSpan)
+			row.appendChild(textSpan)
 			main.appendChild(row)
 		}
 
