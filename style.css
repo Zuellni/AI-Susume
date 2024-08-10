@@ -1,0 +1,139 @@
+:root {
+	--bgl: rgb(239, 239, 244);
+	--bgm: rgb(38, 40, 100);
+	--bgd: rgb(24, 25, 63);
+	--fgl: rgb(244, 143, 177);
+	--fgm: rgb(239, 97, 145);
+}
+
+* {
+	font: 1rem / 1 "Noto Sans", sans-serif;
+	font-style: normal;
+	font-weight: normal;
+	appearance: none;
+	text-decoration: none;
+	box-sizing: border-box;
+	color: var(--bgd);
+	opacity: 1;
+	border: 0;
+	margin: 0;
+	outline: 0;
+	padding: 0;
+}
+
+html {
+	display: grid;
+	align-items: center;
+	justify-items: center;
+	height: 100%;
+	background: var(--bgd);
+	color: var(--bgl);
+}
+
+body {
+	display: grid;
+	grid-template-columns: 1fr 1fr 1fr;
+	margin: 1rem;
+	gap: 1rem;
+}
+
+h1 {
+	grid-column: span 3;
+	text-align: center;
+
+	span {
+		font-size: 3rem;
+		color: var(--bgm);
+
+		&:first-of-type {
+			font-weight: bold;
+			color: var(--fgm);
+		}
+
+		&:last-of-type {
+			color: var(--bgl);
+		}
+	}
+}
+
+form {
+	display: grid;
+	grid-template-columns: auto 1fr;
+	align-items: center;
+	padding: 1rem;
+	gap: 1rem;
+	border-radius: 1rem;
+	background: var(--bgm);
+
+	fieldset {
+		display: grid;
+		grid-column: span 2;
+		grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+		align-items: center;
+		gap: 1rem;
+	}
+
+	label {
+		color: var(--bgl);
+	}
+
+	input,
+	select {
+		width: 100%;
+		height: 3rem;
+		padding: 1rem;
+		border-radius: 1rem;
+		background: var(--bgl);
+		color: var(--bgd);
+
+		&:disabled {
+			cursor: not-allowed;
+		}
+
+		&::placeholder {
+			color: var(--bgm);
+		}
+
+		&[type=button] {
+			grid-column: span 2;
+			background: var(--fgl);
+			transition: .5s;
+
+			&:hover:not(:disabled) {
+				background: var(--fgm);
+				color: var(--bgm);
+				cursor: pointer;
+			}
+		}
+	}
+}
+
+header {
+	display: none;
+	border-radius: 1rem;
+	background: var(--bgm);
+
+	span {
+		color: var(--bgl);
+	}
+}
+
+main {
+	display: grid;
+	grid-column: span 3;
+	border-radius: 1rem;
+	background: var(--bgl);
+
+	output {
+		display: grid;
+	}
+}
+
+header,
+main output {
+	grid-column: span 3;
+	grid-template-columns: 1fr auto;
+	column-gap: 1rem;
+	height: 3rem;
+	padding: 1rem;
+}

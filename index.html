@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="icon" href="icon.png">
+	<link rel="stylesheet" href="style.css">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/noto-sans/400.min.css">
+	<script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+	<script defer src="script.js"></script>
+	<title>AI-Susume</title>
+</head>
+
+<body>
+	<h1><span>AI</span><span>-</span><span>Susume</span></h1>
+	<form>
+		<label for="user">User</label>
+		<input type="text" id="user" placeholder="None" spellcheck="false">
+		<label for="token">Token</label>
+		<input type="password" id="token" placeholder="None">
+		<input type="button" id="get" value="Get List">
+	</form>
+	<form>
+		<label for="epochs">Epochs</label>
+		<input type="number" id="epochs" value="1000" min="1" max="100000">
+		<label for="patience">Patience</label>
+		<input type="number" id="patience" value="100" min="1" max="100000">
+		<input type="button" id="train" value="Train Model">
+	</form>
+	<form>
+		<fieldset>
+			<label for="yearFrom">From</label>
+			<input type="number" id="yearFrom" value="1917" min="1917">
+			<label for="yearTo">To</label>
+			<input type="number" id="yearTo" min="1917">
+			<label for="type">Type</label>
+			<select id="type">
+				<option value="TV">TV</option>
+				<option value="MOVIE">Movie</option>
+				<option value="OVA">OVA</option>
+				<option value="ONA">ONA</option>
+				<option value="SPECIAL">Special</option>
+			</select>
+			<label for="limit">Limit</label>
+			<input type="number" id="limit" value="10" min="1" max="10000">
+		</fieldset>
+		<input type="button" id="predict" value="Recommend">
+	</form>
+	<header>
+		<span>Title</span>
+		<span>Score</span>
+	</header>
+	<main></main>
+</body>
+
+</html>
