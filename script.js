@@ -92,7 +92,7 @@ const getList = async (user, type, token) => {
 }
 
 const loadDatabase = async () => {
-	const response = await fetch("database/anime-offline-database-minified.json")
+	const response = await fetch("https://raw.githubusercontent.com/manami-project/anime-offline-database/master/anime-offline-database-minified.json")
 	const json = response.ok && await response.json()
 	return json.data
 }
