@@ -41,7 +41,7 @@ h1 {
 	grid-column: span 3;
 	text-align: center;
 
-	span {
+	a span {
 		font-size: 3rem;
 		color: var(--bgm);
 
@@ -125,11 +125,17 @@ main {
 
 	output {
 		display: grid;
+
+		span {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
 	}
 }
 
 header,
-output {
+main output {
 	grid-column: span 3;
 	grid-template-columns: 1fr auto;
 	column-gap: 1rem;
