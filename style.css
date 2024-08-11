@@ -44,14 +44,15 @@ header {
 
 	span {
 		font-size: 3rem;
+		font-weight: bold;
 		color: var(--bgl);
 
 		&:first-of-type {
-			font-weight: bold;
 			color: var(--acd);
 		}
 
 		&:last-of-type {
+			font-weight: normal;
 			color: var(--fgl);
 		}
 	}
