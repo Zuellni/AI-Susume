@@ -197,7 +197,6 @@ const limit = document.querySelector("#limit")
 const predict = document.querySelector("#predict")
 const predictValue = predict.value
 
-const header = document.querySelector("header")
 const main = document.querySelector("main")
 let list, model, data
 
@@ -223,7 +222,7 @@ train.addEventListener("click", async () => {
 	const callbacks = {
 		onEpochEnd: (epoch) => {
 			epoch = epoch / epochs.value * 100
-			train.style.background = `linear-gradient(90deg, var(--fgm), ${epoch}%, var(--fgl), ${epoch}%, var(--fgl))`
+			train.style.background = `linear-gradient(90deg, var(--acd), ${epoch}%, var(--acl), ${epoch}%, var(--acl))`
 		},
 		onTrainEnd: () => train.removeAttribute("style")
 	}
@@ -248,7 +247,6 @@ train.addEventListener("click", async () => {
 predict.addEventListener("click", async () => {
 	disable(elements)
 	predict.value = "Recommending..."
-	header.removeAttribute("style")
 	main.replaceChildren()
 
 	const dataPred = data.pred.filter(item =>
@@ -269,24 +267,33 @@ predict.addEventListener("click", async () => {
 	}
 
 	if (preds && scores && scoresNorm) {
+		const header = document.createElement("output")
+		const title = document.createElement("span")
+		const score = document.createElement("span")
+
+		title.innerText = "Title"
+		score.innerText = "Score"
+
+		header.appendChild(title)
+		header.appendChild(score)
+		main.appendChild(header)
+
 		for (let i = 0; i < preds.length; i++) {
 			const row = document.createElement("output")
 			const link = document.createElement("a")
-			const linkSpan = document.createElement("span")
-			const textSpan = document.createElement("span")
+			const span = document.createElement("span")
+			const score = document.createElement("span")
 
 			link.href = preds[i].siteUrl
 			link.target = "_blank"
 			link.innerText = preds[i].title
-			textSpan.innerText = Math.round(scoresNorm[i])
+			score.innerText = Math.round(scoresNorm[i])
 
-			linkSpan.appendChild(link)
-			row.appendChild(linkSpan)
-			row.appendChild(textSpan)
+			span.appendChild(link)
+			row.appendChild(span)
+			row.appendChild(score)
 			main.appendChild(row)
 		}
-
-		header.style.display = "grid"
 	}
 
 	enable(elements)

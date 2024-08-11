@@ -1,9 +1,10 @@
 :root {
-	--bgl: rgb(239, 239, 244);
-	--bgm: rgb(38, 40, 100);
+	--bgl: rgb(38, 40, 100);
 	--bgd: rgb(24, 25, 63);
-	--fgl: rgb(244, 143, 177);
-	--fgm: rgb(239, 97, 145);
+	--fgl: rgb(239, 239, 244);
+	--fgd: rgb(229, 229, 234);
+	--acl: rgb(244, 143, 177);
+	--acd: rgb(239, 97, 145);
 }
 
 * {
@@ -22,12 +23,13 @@
 }
 
 html {
-	display: grid;
+	display: flex;
+	flex-direction: column;
 	align-items: center;
-	justify-items: center;
+	justify-content: center;
 	height: 100%;
 	background: var(--bgd);
-	color: var(--bgl);
+	color: var(--fgl);
 }
 
 body {
@@ -37,21 +39,21 @@ body {
 	gap: 1rem;
 }
 
-h1 {
+header {
 	grid-column: span 3;
 	text-align: center;
 
-	a span {
+	span {
 		font-size: 3rem;
-		color: var(--bgm);
+		color: var(--bgl);
 
 		&:first-of-type {
 			font-weight: bold;
-			color: var(--fgm);
+			color: var(--acd);
 		}
 
 		&:last-of-type {
-			color: var(--bgl);
+			color: var(--fgl);
 		}
 	}
 }
@@ -59,11 +61,12 @@ h1 {
 form {
 	display: grid;
 	grid-template-columns: auto 1fr;
+	align-content: space-between;
 	align-items: baseline;
 	padding: 1rem;
 	gap: 1rem;
 	border-radius: 1rem;
-	background: var(--bgm);
+	background: var(--bgl);
 
 	fieldset {
 		display: grid;
@@ -74,7 +77,7 @@ form {
 	}
 
 	label {
-		color: var(--bgl);
+		color: var(--fgl);
 	}
 
 	input,
@@ -82,7 +85,7 @@ form {
 		height: 3rem;
 		padding: 1rem;
 		border-radius: 1rem;
-		background: var(--bgl);
+		background: var(--fgl);
 		color: var(--bgd);
 
 		&:disabled {
@@ -90,41 +93,50 @@ form {
 		}
 
 		&::placeholder {
-			color: var(--bgd);
+			color: var(--bgl);
 		}
 
 		&[type=button] {
 			grid-column: span 2;
-			background: var(--fgl);
+			background: var(--acl);
 			transition: .5s;
 
 			&:hover:not(:disabled) {
-				background: var(--fgm);
-				color: var(--bgm);
+				background: var(--acd);
+				color: var(--bgl);
 				cursor: pointer;
 			}
 		}
 	}
 }
 
-header {
-	display: none;
-	border-radius: 1rem;
-	background: var(--bgm);
-
-	span {
-		color: var(--bgl);
-	}
-}
-
 main {
-	display: grid;
 	grid-column: span 3;
-	border-radius: 1rem;
-	background: var(--bgl);
 
 	output {
 		display: grid;
+		grid-template-columns: 1fr auto;
+		column-gap: 1rem;
+		height: 3rem;
+		padding: 1rem;
+		background: var(--fgl);
+
+		&:first-of-type {
+			border-radius: 1rem 1rem 0 0;
+			background: var(--bgl);
+
+			span {
+				color: var(--fgl);
+			}
+		}
+
+		&:nth-of-type(even) {
+			background: var(--fgd);
+		}
+
+		&:last-of-type {
+			border-radius: 0 0 1rem 1rem;
+		}
 
 		span {
 			overflow: hidden;
@@ -132,15 +144,6 @@ main {
 			white-space: nowrap;
 		}
 	}
-}
-
-header,
-main output {
-	grid-column: span 3;
-	grid-template-columns: 1fr auto;
-	column-gap: 1rem;
-	height: 3rem;
-	padding: 1rem;
 }
 
 @media (max-width: 960px) {
