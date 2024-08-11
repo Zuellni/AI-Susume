@@ -23,10 +23,9 @@
 }
 
 html {
-	display: flex;
-	flex-direction: column;
+	display: grid;
 	align-items: center;
-	justify-content: center;
+	justify-items: center;
 	height: 100%;
 	background: var(--bgd);
 	color: var(--fgl);
