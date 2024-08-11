@@ -81,6 +81,7 @@ form {
 
 	input,
 	select {
+		width: 100%;
 		height: 3rem;
 		padding: 1rem;
 		border-radius: 1rem;
@@ -149,5 +150,6 @@ main {
 	body {
 		display: flex;
 		flex-direction: column;
+		width: 100%;
 	}
 }
