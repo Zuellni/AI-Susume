@@ -2,29 +2,29 @@ class Model {
 	constructor(shape) {
 		this.model = tf.sequential()
 		this.model.add(tf.layers.dense({ units: 512, activation: "relu", inputShape: [shape] }))
-		this.model.add(tf.layers.dense({ units: 256, activation: "relu" }))
-		this.model.add(tf.layers.dropout({ rate: 0.1 }))
-		this.model.add(tf.layers.dense({ units: 128, activation: "relu" }))
-		this.model.add(tf.layers.dropout({ rate: 0.1 }))
+		this.model.add(tf.layers.dropout(0.3))
 		this.model.add(tf.layers.dense({ units: 64, activation: "relu" }))
-		this.model.add(tf.layers.dense({ units: 1, activation: "sigmoid" }))
-		this.model.compile({ loss: "meanSquaredError", metrics: "mse", optimizer: "adam" })
+		this.model.add(tf.layers.dropout(0.2))
+		this.model.add(tf.layers.dense({ units: 8, activation: "relu" }))
+		this.model.add(tf.layers.dropout(0.1))
+		this.model.add(tf.layers.dense({ units: 1 }))
+		this.model.compile({ loss: "meanSquaredError", metrics: "mse", optimizer: "sgd" })
 	}
 
 	async train(data, epochs, patience, callbacks) {
 		const inputs = data.map(item => item.input)
 		const outputs = data.map(item => item.score)
-		const inputsTensor = tf.tensor2d(inputs)
-		const outputsTensor = tf.tensor1d(outputs)
+		const inputsTensor = tf.tensor(inputs)
+		const outputsTensor = tf.tensor(outputs)
 
 		await this.model.fit(inputsTensor, outputsTensor, {
 			callbacks: [
 				new tf.CustomCallback(callbacks),
-				tf.callbacks.earlyStopping({ monitor: "val_loss", patience: patience }),
+				tf.callbacks.earlyStopping({ monitor: "val_mse", patience: patience }),
 			],
 			batchSize: inputs.length,
 			epochs: epochs,
-			validationSplit: 0.1,
+			validationSplit: 0.2,
 		})
 
 		tf.dispose([inputsTensor, outputsTensor])
@@ -32,7 +32,7 @@ class Model {
 
 	async predict(data, limit) {
 		const inputs = data.map(item => item.input)
-		const inputsTensor = tf.tensor2d(inputs)
+		const inputsTensor = tf.tensor(inputs)
 		const predictions = this.model.predict(inputsTensor, { batchSize: inputs.length })
 		const predictionsData = await predictions.data()
 
@@ -101,17 +101,14 @@ const loadDatabase = async () => {
 	return json.data
 }
 
-const createSchema = (database, types) => {
+const createSchema = (database) => {
 	const schema = new Set()
 
 	for (const { tags } of database)
 		for (const tag of tags)
 			schema.add(tag.toUpperCase())
 
-	for (const type of types)
-		schema.add(type)
-
-	return Array.from(schema)
+	return Array.from(schema).sort()
 }
 
 const prepareData = (entries, database, schema) => {
@@ -135,12 +132,7 @@ const prepareData = (entries, database, schema) => {
 				input[index] = 1
 		}
 
-		if (input.some(value => value == 1)) {
-			const index = schema.indexOf(type)
-
-			if (index != -1)
-				input[index] = 1
-
+		if (input.some(value => value == 1))
 			if (score)
 				dataTrain.push({
 					input: input,
@@ -154,7 +146,6 @@ const prepareData = (entries, database, schema) => {
 					type: type,
 					year: animeSeason.year,
 				})
-		}
 	}
 
 	return { train: dataTrain, predict: dataPredict }
@@ -197,7 +188,7 @@ const predict = document.querySelector("#predict")
 const predictValue = predict.value
 
 const main = document.querySelector("main")
-let list, model, data
+let list, data, model
 
 get.addEventListener("click", async () => {
 	disable(elements)
@@ -206,7 +197,9 @@ get.addEventListener("click", async () => {
 	try {
 		list = await getList(user.value, "ANIME", token.value)
 		list.entries = normalize(list.entries, list.min, list.max, 0, 1)
+
 		get.value = getValue
+		console.log(list)
 	} catch (e) {
 		get.value = "Error"
 		console.log(e)
@@ -220,21 +213,25 @@ train.addEventListener("click", async () => {
 	train.value = "Training Model..."
 
 	const callbacks = {
-		onEpochEnd: (epoch) => {
+		onEpochEnd: (epoch, log) => {
 			epoch = epoch / epochs.value * 100
 			train.style.background = `linear-gradient(90deg, var(--acd), ${epoch}%, var(--acl), ${epoch}%, var(--acl))`
+			console.log(`mse: ${log.mse}\tval_mse: ${log.val_mse}`)
 		},
 		onTrainEnd: () => train.removeAttribute("style")
 	}
 
 	try {
 		const database = await loadDatabase()
-		const types = Array.from(type.options).map(option => option.value)
-		const schema = createSchema(database, types)
+		console.log(database)
+
+		const schema = createSchema(database)
+		console.log(schema)
+
+		data = prepareData(list.entries, database, schema)
+		console.log(data)
 
 		model = new Model(schema.length)
-		data = prepareData(list.entries, database, schema)
-
 		await model.train(data.train, epochs.value, patience.value, callbacks)
 		train.value = trainValue
 	} catch (e) {
@@ -262,7 +259,9 @@ predict.addEventListener("click", async () => {
 		predictions = await model.predict(dataPredict, limit.value)
 		scores = predictions.map(pred => pred.score)
 		scoresNorm = normalize(scores, 0, 1, list.min, list.max)
+
 		predict.value = predictValue
+		console.log(predictions)
 	} catch (e) {
 		predict.value = "Error"
 		console.log(e)

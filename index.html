@@ -23,16 +23,16 @@
 	</header>
 	<form>
 		<label for="user">User</label>
-		<input type="text" id="user" placeholder="None" spellcheck="false">
+		<input type="text" id="user" autocomplete="user" placeholder="None" spellcheck="false">
 		<label for="token">Token</label>
-		<input type="password" id="token" placeholder="None">
+		<input type="password" id="token" autocomplete="token" placeholder="None">
 		<input type="button" id="get" value="Get List">
 	</form>
 	<form>
 		<label for="epochs">Epochs</label>
 		<input type="number" id="epochs" value="1000" min="1" max="100000">
 		<label for="patience">Patience</label>
-		<input type="number" id="patience" value="100" min="1" max="100000">
+		<input type="number" id="patience" value="10" min="1" max="100000">
 		<input type="button" id="train" value="Train Model">
 	</form>
 	<form>
