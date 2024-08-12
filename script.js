@@ -258,7 +258,14 @@ predict.addEventListener("click", async () => {
 	try {
 		predictions = await model.predict(dataPredict, limit.value)
 		scores = predictions.map(pred => pred.score)
-		scoresNorm = normalize(scores, 0, 1, list.min, list.max)
+
+		let min = Math.min(...scores)
+		let max = Math.max(...scores)
+
+		min = min < 0 ? min : 0
+		max = max > 1 ? max : 1
+
+		scoresNorm = normalize(scores, min, max, list.min, list.max)
 
 		predict.value = predictValue
 		console.log(predictions)
