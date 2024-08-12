@@ -2,10 +2,13 @@ class Model {
 	constructor(shape) {
 		this.model = tf.sequential()
 		this.model.add(tf.layers.dense({ units: 512, activation: "relu", inputShape: [shape] }))
+		this.model.add(tf.layers.dense({ units: 256, activation: "relu" }))
+		this.model.add(tf.layers.dropout({ rate: 0.1 }))
 		this.model.add(tf.layers.dense({ units: 128, activation: "relu" }))
-		this.model.add(tf.layers.dense({ units: 32, activation: "relu" }))
+		this.model.add(tf.layers.dropout({ rate: 0.1 }))
+		this.model.add(tf.layers.dense({ units: 64, activation: "relu" }))
 		this.model.add(tf.layers.dense({ units: 1, activation: "sigmoid" }))
-		this.model.compile({ loss: "meanSquaredError", optimizer: "adam", metrics: "acc" })
+		this.model.compile({ loss: "meanSquaredError", metrics: "mse", optimizer: "adam" })
 	}
 
 	async train(data, epochs, patience, callbacks) {
@@ -13,15 +16,15 @@ class Model {
 		const outputs = data.map(item => item.score)
 		const inputsTensor = tf.tensor2d(inputs)
 		const outputsTensor = tf.tensor1d(outputs)
-		const batchSize = inputs.length
 
 		await this.model.fit(inputsTensor, outputsTensor, {
-			batchSize: batchSize,
 			callbacks: [
 				new tf.CustomCallback(callbacks),
-				tf.callbacks.earlyStopping({ monitor: "acc", patience: patience }),
+				tf.callbacks.earlyStopping({ monitor: "val_loss", patience: patience }),
 			],
+			batchSize: inputs.length,
 			epochs: epochs,
+			validationSplit: 0.1,
 		})
 
 		tf.dispose([inputsTensor, outputsTensor])
@@ -30,12 +33,13 @@ class Model {
 	async predict(data, limit) {
 		const inputs = data.map(item => item.input)
 		const inputsTensor = tf.tensor2d(inputs)
-		const preds = this.model.predict(inputsTensor)
-		const predsData = await preds.data()
-		tf.dispose([inputsTensor, preds])
+		const predictions = this.model.predict(inputsTensor, { batchSize: inputs.length })
+		const predictionsData = await predictions.data()
+
+		tf.dispose([inputsTensor, predictions])
 
 		const outputs = data.map((item, index) => ({
-			score: predsData[index],
+			score: predictionsData[index],
 			siteUrl: item.siteUrl,
 			title: item.title,
 		}))
@@ -113,7 +117,7 @@ const createSchema = (database, types) => {
 const prepareData = (entries, database, schema) => {
 	const schemaLen = schema.length
 	const dataTrain = []
-	const dataPred = []
+	const dataPredict = []
 
 	for (const { animeSeason, sources, status, tags, title, type } of database) {
 		const siteUrl = sources.find(item => item.startsWith("https://anilist.co"))
@@ -123,10 +127,6 @@ const prepareData = (entries, database, schema) => {
 
 		const input = new Array(schemaLen).fill(0)
 		const score = entries[siteUrl]
-		const index = schema.indexOf(type)
-
-		if (index != -1)
-			input[index] = 1
 
 		for (const tag of tags) {
 			const index = schema.indexOf(tag.toUpperCase())
@@ -135,22 +135,29 @@ const prepareData = (entries, database, schema) => {
 				input[index] = 1
 		}
 
-		if (score)
-			dataTrain.push({
-				input: input,
-				score: score,
-			})
-		else if (status == "FINISHED" || status == "ONGOING")
-			dataPred.push({
-				input: input,
-				siteUrl: siteUrl,
-				title: title,
-				type: type,
-				year: animeSeason.year,
-			})
+		if (input.some(value => value == 1)) {
+			const index = schema.indexOf(type)
+
+			if (index != -1)
+				input[index] = 1
+
+			if (score)
+				dataTrain.push({
+					input: input,
+					score: score,
+				})
+			else if (status == "FINISHED" || status == "ONGOING")
+				dataPredict.push({
+					input: input,
+					siteUrl: siteUrl,
+					title: title,
+					type: type,
+					year: animeSeason.year,
+				})
+		}
 	}
 
-	return { train: dataTrain, pred: dataPred }
+	return { train: dataTrain, predict: dataPredict }
 }
 
 const normalize = (obj, oldMin, oldMax, newMin, newMax) => {
@@ -162,17 +169,9 @@ const normalize = (obj, oldMin, oldMax, newMin, newMax) => {
 	)
 }
 
-const disable = (elements) => {
-	for (const element of elements)
-		element.disabled = true
-}
-
-const enable = (elements) => {
-	for (const element of elements)
-		element.disabled = false
-}
-
 const elements = document.querySelectorAll("input, select")
+const enable = (elements) => elements.forEach(element => element.disabled = false)
+const disable = (elements) => elements.forEach(element => element.disabled = true)
 
 const user = document.querySelector("#user")
 const token = document.querySelector("#token")
@@ -208,8 +207,9 @@ get.addEventListener("click", async () => {
 		list = await getList(user.value, "ANIME", token.value)
 		list.entries = normalize(list.entries, list.min, list.max, 0, 1)
 		get.value = getValue
-	} catch {
-		get.value = "Error!"
+	} catch (e) {
+		get.value = "Error"
+		console.log(e)
 	}
 
 	enable(elements)
@@ -237,8 +237,9 @@ train.addEventListener("click", async () => {
 
 		await model.train(data.train, epochs.value, patience.value, callbacks)
 		train.value = trainValue
-	} catch {
-		train.value = "Error!"
+	} catch (e) {
+		train.value = "Error"
+		console.log(e)
 	}
 
 	enable(elements)
@@ -249,24 +250,25 @@ predict.addEventListener("click", async () => {
 	predict.value = "Recommending..."
 	main.replaceChildren()
 
-	const dataPred = data.pred.filter(item =>
+	const dataPredict = data.predict.filter(item =>
 		item.type == type.value
 		&& item.year >= yearFrom.value
 		&& item.year <= yearTo.value
 	)
 
-	let preds, scores, scoresNorm
+	let predictions, scores, scoresNorm
 
 	try {
-		preds = await model.predict(dataPred, limit.value)
-		scores = preds.map(pred => pred.score)
+		predictions = await model.predict(dataPredict, limit.value)
+		scores = predictions.map(pred => pred.score)
 		scoresNorm = normalize(scores, 0, 1, list.min, list.max)
 		predict.value = predictValue
-	} catch {
-		predict.value = "Error!"
+	} catch (e) {
+		predict.value = "Error"
+		console.log(e)
 	}
 
-	if (preds && scores && scoresNorm) {
+	if (predictions && scores && scoresNorm) {
 		const header = document.createElement("output")
 		const title = document.createElement("span")
 		const score = document.createElement("span")
@@ -278,15 +280,15 @@ predict.addEventListener("click", async () => {
 		header.appendChild(score)
 		main.appendChild(header)
 
-		for (let i = 0; i < preds.length; i++) {
+		for (let i = 0; i < predictions.length; i++) {
 			const row = document.createElement("output")
 			const link = document.createElement("a")
 			const span = document.createElement("span")
 			const score = document.createElement("span")
 
-			link.href = preds[i].siteUrl
+			link.href = predictions[i].siteUrl
 			link.target = "_blank"
-			link.innerText = preds[i].title
+			link.innerText = predictions[i].title
 			score.innerText = Math.round(scoresNorm[i])
 
 			span.appendChild(link)
