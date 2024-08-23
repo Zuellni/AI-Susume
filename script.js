@@ -98,25 +98,51 @@ const getList = async (user, type, token) => {
 const loadDatabase = async () => {
 	const response = await fetch("https://raw.githubusercontent.com/manami-project/anime-offline-database/master/anime-offline-database-minified.json")
 	const json = response.ok && await response.json()
-	return json.data
+	const data = json.data
+
+	const tags = new Set(data.flatMap(entry => entry.tags.map(tag => tag.toUpperCase())))
+	const tagGroups = []
+	const tagMapping = {}
+	const threshold = 0.7
+
+	for (const tag of tags) {
+		let added = false
+
+		for (const group of tagGroups)
+			if (stringSimilarity(tag, group[0]) >= threshold) {
+				group.push(tag)
+				added = true
+				break
+			}
+
+		if (!added)
+			tagGroups.push([tag])
+	}
+
+	for (const group of tagGroups) {
+		const representativeTag = group[0]
+
+		for (const tag of group)
+			tagMapping[tag] = representativeTag
+	}
+
+	const updatedData = data.map(entry => ({
+		...entry,
+		tags: entry.tags.map(tag => tagMapping[tag.toUpperCase()] || tag.toUpperCase())
+	}))
+
+	const finalTags = [...new Set(updatedData.flatMap(entry => entry.tags))].sort()
+	return { data: updatedData, schema: finalTags }
 }
 
-const createSchema = (database) => {
-	const schema = new Set()
-
-	for (const { tags } of database)
-		for (const tag of tags)
-			schema.add(tag.toUpperCase())
-
-	return Array.from(schema).sort()
-}
-
-const prepareData = (entries, database, schema) => {
+const prepareData = (entries, database) => {
+	const schema = database.schema
 	const schemaLen = schema.length
+	const data = database.data
 	const dataTrain = []
 	const dataPredict = []
 
-	for (const { animeSeason, sources, status, tags, title, type } of database) {
+	for (const { animeSeason, sources, status, tags, title, type } of data) {
 		const siteUrl = sources.find(item => item.startsWith("https://anilist.co"))
 
 		if (!animeSeason.year || !siteUrl || type == "UNKNOWN")
@@ -225,13 +251,10 @@ train.addEventListener("click", async () => {
 		const database = await loadDatabase()
 		console.log(database)
 
-		const schema = createSchema(database)
-		console.log(schema)
-
-		data = prepareData(list.entries, database, schema)
+		data = prepareData(list.entries, database)
 		console.log(data)
 
-		model = new Model(schema.length)
+		model = new Model(database.schema.length)
 		await model.train(data.train, epochs.value, patience.value, callbacks)
 		train.value = trainValue
 	} catch (e) {
