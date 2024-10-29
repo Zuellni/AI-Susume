@@ -2,11 +2,10 @@ class Model {
 	constructor(shape) {
 		this.model = tf.sequential()
 		this.model.add(tf.layers.dense({ units: 512, activation: "relu", inputShape: [shape] }))
-		this.model.add(tf.layers.dropout(0.3))
+		this.model.add(tf.layers.dropout(0.4))
 		this.model.add(tf.layers.dense({ units: 64, activation: "relu" }))
 		this.model.add(tf.layers.dropout(0.2))
 		this.model.add(tf.layers.dense({ units: 8, activation: "relu" }))
-		this.model.add(tf.layers.dropout(0.1))
 		this.model.add(tf.layers.dense({ units: 1 }))
 		this.model.compile({ loss: "meanSquaredError", metrics: "mse", optimizer: "sgd" })
 	}
