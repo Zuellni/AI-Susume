@@ -201,18 +201,7 @@ const prepareData = (entries, database) => {
 				input[index] = 1
 		}
 
-		const positive = input.reduce((count, value) => count + (value === 1 ? 1 : 0), 0)
-
-		if (positive > 0) {
-			const normalized = 1 / positive
-
-			input.forEach((value, index) => {
-				if (value === 1)
-					input[index] = normalized
-			})
-		}
-
-		if (input.some(value => value > 1))
+		if (input.some(value => value === 1))
 			if (score)
 				dataTrain.push({
 					input: input,
