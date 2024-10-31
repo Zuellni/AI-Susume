@@ -47,6 +47,50 @@ class Model {
 	}
 }
 
+const stringSimilarity = (first, second) => {
+	const stack = [first, second]
+	let score = 0
+
+	while (stack.length !== 0) {
+		const fss = stack.pop()
+		const sss = stack.pop()
+		let lsl = 0
+		let flsi = -1
+		let slsi = -1
+
+		for (let i = 0; i < fss.length; i++) {
+			for (let j = 0; j < sss.length; j++) {
+				let k = 0
+
+				while (i + k < fss.length && j + k < sss.length && fss.charAt(i + k) === sss.charAt(j + k))
+					k++
+
+				if (k > lsl) {
+					lsl = k
+					flsi = i
+					slsi = j
+				}
+			}
+		}
+
+		if (lsl > 0) {
+			score += lsl * 2
+
+			if (flsi !== 0 && slsi !== 0) {
+				stack.push(fss.substring(0, flsi))
+				stack.push(sss.substring(0, slsi))
+			}
+
+			if (flsi + lsl !== fss.length && slsi + lsl !== sss.length) {
+				stack.push(fss.substring(flsi + lsl, fss.length))
+				stack.push(sss.substring(slsi + lsl, sss.length))
+			}
+		}
+	}
+
+	return score / (first.length + second.length)
+}
+
 const getList = async (user, type, token) => {
 	const options = {
 		method: "POST",
@@ -144,7 +188,7 @@ const prepareData = (entries, database) => {
 	for (const { animeSeason, sources, status, tags, title, type } of data) {
 		const siteUrl = sources.find(item => item.startsWith("https://anilist.co"))
 
-		if (!animeSeason.year || !siteUrl || type == "UNKNOWN")
+		if (!animeSeason.year || !siteUrl || type === "UNKNOWN")
 			continue
 
 		const input = new Array(schemaLen).fill(0)
@@ -153,17 +197,28 @@ const prepareData = (entries, database) => {
 		for (const tag of tags) {
 			const index = schema.indexOf(tag.toUpperCase())
 
-			if (index != -1)
+			if (index !== -1)
 				input[index] = 1
 		}
 
-		if (input.some(value => value == 1))
+		const positive = input.reduce((count, value) => count + (value === 1 ? 1 : 0), 0)
+
+		if (positive > 0) {
+			const normalized = 1 / positive
+
+			input.forEach((value, index) => {
+				if (value === 1)
+					input[index] = normalized
+			})
+		}
+
+		if (input.some(value => value > 1))
 			if (score)
 				dataTrain.push({
 					input: input,
 					score: score,
 				})
-			else if (status == "FINISHED" || status == "ONGOING")
+			else if (status === "FINISHED" || status === "ONGOING")
 				dataPredict.push({
 					input: input,
 					siteUrl: siteUrl,
@@ -270,7 +325,7 @@ predict.addEventListener("click", async () => {
 	main.replaceChildren()
 
 	const dataPredict = data.predict.filter(item =>
-		item.type == type.value
+		item.type === type.value
 		&& item.year >= yearFrom.value
 		&& item.year <= yearTo.value
 	)
