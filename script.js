@@ -192,7 +192,7 @@ const prepareData = (entries, database) => {
 		if (!animeSeason.year || !siteUrl || type === "UNKNOWN")
 			continue
 
-		let input = new Array(schemaLen).fill(0)
+		const input = new Array(schemaLen).fill(0)
 		const score = entries[siteUrl]
 
 		for (const tag of tags) {
