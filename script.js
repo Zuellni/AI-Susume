@@ -1,13 +1,13 @@
 class Model {
 	constructor(shape) {
 		this.model = tf.sequential()
-		this.model.add(tf.layers.dense({ units: 512, activation: "relu", inputShape: [shape] }))
-		this.model.add(tf.layers.dropout(0.4))
-		this.model.add(tf.layers.dense({ units: 64, activation: "relu" }))
-		this.model.add(tf.layers.dropout(0.2))
-		this.model.add(tf.layers.dense({ units: 8, activation: "relu" }))
-		this.model.add(tf.layers.dense({ units: 1 }))
-		this.model.compile({ loss: "meanSquaredError", metrics: "mse", optimizer: "sgd" })
+		this.model.add(tf.layers.batchNormalization({ inputShape: [shape] }))
+		this.model.add(tf.layers.dense({ units: 256, activation: "relu", kernelRegularizer: tf.regularizers.l2({ l2: 0.01 }) }))
+		this.model.add(tf.layers.dropout({ rate: 0.3 }))
+		this.model.add(tf.layers.dense({ units: 64, activation: "relu", kernelRegularizer: tf.regularizers.l2({ l2: 0.01 }) }))
+		this.model.add(tf.layers.dropout({ rate: 0.3 }))
+		this.model.add(tf.layers.dense({ units: 1, activation: "sigmoid" }))
+		this.model.compile({ loss: "meanSquaredError", metrics: "mse", optimizer: "adam" })
 	}
 
 	async train(data, epochs, patience, callbacks) {
@@ -19,10 +19,11 @@ class Model {
 		await this.model.fit(inputsTensor, outputsTensor, {
 			callbacks: [
 				new tf.CustomCallback(callbacks),
-				tf.callbacks.earlyStopping({ monitor: "val_mse", patience: patience }),
+				tf.callbacks.earlyStopping({ monitor: "val_loss", patience: patience }),
 			],
 			batchSize: inputs.length,
 			epochs: epochs,
+			shuffle: true,
 			validationSplit: 0.2,
 		})
 
@@ -191,7 +192,7 @@ const prepareData = (entries, database) => {
 		if (!animeSeason.year || !siteUrl || type === "UNKNOWN")
 			continue
 
-		const input = new Array(schemaLen).fill(0)
+		let input = new Array(schemaLen).fill(0)
 		const score = entries[siteUrl]
 
 		for (const tag of tags) {
@@ -201,7 +202,11 @@ const prepareData = (entries, database) => {
 				input[index] = 1
 		}
 
-		if (input.some(value => value === 1))
+		const tagCount = input.reduce((sum, val) => sum + val, 0)
+
+		if (tagCount > 0) {
+			// input = input.map(val => val / tagCount)
+
 			if (score)
 				dataTrain.push({
 					input: input,
@@ -215,6 +220,7 @@ const prepareData = (entries, database) => {
 					type: type,
 					year: animeSeason.year,
 				})
+		}
 	}
 
 	return { train: dataTrain, predict: dataPredict }
@@ -285,7 +291,7 @@ train.addEventListener("click", async () => {
 		onEpochEnd: (epoch, log) => {
 			epoch = epoch / epochs.value * 100
 			train.style.background = `linear-gradient(90deg, var(--acd), ${epoch}%, var(--acl), ${epoch}%, var(--acl))`
-			console.log(`mse: ${log.mse}\tval_mse: ${log.val_mse}`)
+			console.log(`loss: ${log.loss},\tval_loss: ${log.val_loss}`)
 		},
 		onTrainEnd: () => train.removeAttribute("style")
 	}
