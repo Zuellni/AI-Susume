@@ -3,9 +3,9 @@ class Model {
 		this.model = tf.sequential()
 		this.model.add(tf.layers.batchNormalization({ inputShape: [shape] }))
 		this.model.add(tf.layers.dense({ units: 256, activation: "relu", kernelRegularizer: tf.regularizers.l2({ l2: 0.01 }) }))
-		this.model.add(tf.layers.dropout({ rate: 0.2 }))
+		this.model.add(tf.layers.dropout({ rate: 0.3 }))
 		this.model.add(tf.layers.dense({ units: 64, activation: "relu", kernelRegularizer: tf.regularizers.l2({ l2: 0.01 }) }))
-		this.model.add(tf.layers.dropout({ rate: 0.2 }))
+		this.model.add(tf.layers.dropout({ rate: 0.3 }))
 		this.model.add(tf.layers.dense({ units: 1, activation: "sigmoid" }))
 		this.model.compile({ loss: "meanSquaredError", metrics: "mse", optimizer: "adam" })
 	}
